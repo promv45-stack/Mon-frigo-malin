@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mon Frigo Malin 🍳</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap');
+
+  :root {
+    --cream: #FDF6EC;
+    --warm: #F5E6CC;
+    --terracotta: #C0622F;
+    --light-terra: #E8845A;
+    --dark: #2C1810;
+    --mid: #6B4226;
+    --green: #3D6B45;
+    --light-green: #E8F5E9;
+    --shadow: 0 4px 24px rgba(44,24,16,0.10);
+    --r: 18px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nunito', sans-serif; background: var(--cream); min-height: 100vh; color: var(--dark); }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #C0622F, #8B3A1A);
+    padding: 16px 20px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(192,98,47,.35);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header h1 { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: #FFF8F0; letter-spacing: .3px; }
+  .header-sub { font-size: .72rem; color: rgba(255,248,240,.7); margin-top: 1px; }
+  .thermo-toggle {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(255,255,255,.15); border-radius: 30px; padding: 7px 12px; cursor: pointer;
+    border: 2px solid rgba(255,255,255,.25); transition: all .2s;
+  }
+  .thermo-toggle.active { background: rgba(255,255,255,.3); border-color: rgba(255,255,255,.6); }
+  .thermo-toggle span { font-size: .75rem; font-weight: 800; color: white; }
+  .toggle-dot { width: 28px; height: 16px; background: rgba(0,0,0,.2); border-radius: 8px; position: relative; }
+  .toggle-dot::after { content:''; position:absolute; width:12px; height:12px; border-radius:50%; background:white; top:2px; left:2px; transition:.2s; }
+  .thermo-toggle.active .toggle-dot { background: #FFD54F; }
+  .thermo-toggle.active .toggle-dot::after { left: 14px; }
+
+  /* NAV */
+  .nav { display:flex; background:#fff; box-shadow:0 2px 8px rgba(44,24,16,.08); }
+  .nav-btn { flex:1; padding:11px 6px; border:none; background:transparent; font-family:'Nunito',sans-serif; font-size:.72rem; font-weight:700; color:#aaa; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; border-bottom:3px solid transparent; transition:all .2s; }
+  .nav-btn.active { color:var(--terracotta); border-bottom-color:var(--terracotta); }
+  .nav-btn .ic { font-size:1.2rem; }
+
+  /* SCREENS */
+  .screen { display:none; padding:16px; animation:fi .3s ease; min-height: calc(100vh - 120px); }
+  .screen.active { display:block; }
+  @keyframes fi { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  /* FRIDGE SCREEN */
+  .fridge-hero {
+    background: linear-gradient(135deg, #8B3A1A, #C0622F);
+    border-radius: var(--r); padding: 20px 18px; margin-bottom: 18px;
+    color: white; position: relative; overflow: hidden;
+  }
+  .fridge-hero::before { content:'🍳'; font-size:6rem; position:absolute; right:-8px; top:-8px; opacity:.15; }
+  .fridge-hero h2 { font-family:'Playfair Display',serif; font-size:1.3rem; margin-bottom:6px; }
+  .fridge-hero p { font-size:.82rem; opacity:.88; line-height:1.5; }
+
+  .section-label { font-family:'Playfair Display',serif; font-size:1rem; color:var(--mid); margin-bottom:10px; display:flex; align-items:center; gap:7px; }
+
+  /* INGREDIENTS */
+  .ingredient-input-wrap { display:flex; gap:8px; margin-bottom:14px; }
+  .ingredient-input { flex:1; padding:12px 14px; border:2px solid var(--warm); border-radius:12px; font-family:'Nunito',sans-serif; font-size:.9rem; background:white; outline:none; color:var(--dark); }
+  .ingredient-input:focus { border-color:var(--terracotta); }
+  .add-btn { background:var(--terracotta); color:white; border:none; border-radius:12px; padding:12px 16px; font-size:1.2rem; cursor:pointer; font-weight:800; transition:transform .15s; }
+  .add-btn:active { transform:scale(.95); }
+
+  .categories { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px; }
+  .cat-btn { background:white; border:2px solid var(--warm); border-radius:30px; padding:6px 13px; font-size:.75rem; font-weight:700; color:var(--mid); cursor:pointer; transition:all .2s; }
+  .cat-btn.active { background:var(--terracotta); border-color:var(--terracotta); color:white; }
+
+  .ingredients-grid { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; min-height:44px; }
+  .ingredient-tag {
+    background:white; border:2px solid var(--warm); border-radius:30px; padding:7px 12px;
+    font-size:.8rem; font-weight:700; color:var(--mid); display:flex; align-items:center; gap:6px;
+    box-shadow: 0 2px 8px rgba(44,24,16,.06);
+  }
+  .ingredient-tag .tag-emoji { font-size:.95rem; }
+  .ingredient-tag .remove { cursor:pointer; color:#ccc; font-size:1rem; font-weight:900; transition:color .15s; }
+  .ingredient-tag .remove:hover { color:var(--terracotta); }
+  .empty-fridge { color:#bbb; font-size:.85rem; font-style:italic; padding:12px 0; }
+
+  .find-btn {
+    width:100%; background:linear-gradient(135deg,#C0622F,#8B3A1A); color:white; border:none;
+    border-radius:14px; padding:16px; font-family:'Playfair Display',serif; font-size:1.1rem;
+    cursor:pointer; box-shadow:0 4px 16px rgba(192,98,47,.4); transition:transform .15s;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .find-btn:active { transform:scale(.98); }
+  .find-btn:disabled { opacity:.6; cursor:not-allowed; }
+
+  /* RECIPE RESULTS */
+  .loading-box { text-align:center; padding:40px 20px; }
+  .loading-spinner { font-size:3rem; animation:spin 1s linear infinite; display:block; margin-bottom:14px; }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  .loading-box p { color:var(--mid); font-size:.9rem; }
+
+  .recipe-card {
+    background:white; border-radius:var(--r); padding:18px; box-shadow:var(--shadow);
+    margin-bottom:14px; border-left:5px solid var(--terracotta);
+    cursor:pointer; transition:transform .2s, box-shadow .2s;
+  }
+  .recipe-card:active { transform:scale(.99); }
+  .recipe-card.thermo { border-left-color:#FF6F00; }
+
+  .recipe-header { display:flex; align-items:flex-start; gap:12px; margin-bottom:10px; }
+  .recipe-emoji { font-size:2.2rem; flex-shrink:0; }
+  .recipe-info { flex:1; }
+  .recipe-name { font-family:'Playfair Display',serif; font-size:1.05rem; color:var(--dark); margin-bottom:4px; }
+  .recipe-meta { display:flex; gap:10px; flex-wrap:wrap; }
+  .meta-badge { background:var(--warm); border-radius:8px; padding:3px 9px; font-size:.7rem; font-weight:700; color:var(--mid); }
+  .meta-badge.time { background:#E3F2FD; color:#1565C0; }
+  .meta-badge.diff { background:#F3E5F5; color:#6A1B9A; }
+  .meta-badge.thermo-badge { background:#FFF3E0; color:#E65100; }
+  .meta-badge.match { background:var(--light-green); color:var(--green); }
+
+  .recipe-ingredients-preview { font-size:.8rem; color:#888; margin-top:6px; font-style:italic; }
+  .expand-hint { font-size:.75rem; color:var(--terracotta); font-weight:700; margin-top:8px; }
+
+  /* RECIPE DETAIL */
+  .recipe-detail { display:none; }
+  .recipe-detail.active { display:block; }
+  .back-to-list { display:flex; align-items:center; gap:8px; color:var(--terracotta); font-weight:800; cursor:pointer; margin-bottom:16px; font-size:.9rem; }
+
+  .detail-card { background:white; border-radius:var(--r); padding:20px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .detail-title { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--dark); margin-bottom:6px; }
+  .detail-meta { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .step-num { background:var(--terracotta); color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:900; flex-shrink:0; margin-top:2px; }
+  .step-num.thermo { background:#E65100; }
+  .step { display:flex; gap:12px; margin-bottom:14px; }
+  .step-text { font-size:.87rem; line-height:1.6; color:#444; flex:1; }
+  .step-time { font-size:.72rem; color:var(--terracotta); font-weight:700; white-space:nowrap; }
+
+  .ingredients-list { display:flex; flex-direction:column; gap:8px; }
+  .ing-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f5f5f5; font-size:.85rem; }
+  .ing-item:last-child { border-bottom:none; }
+  .ing-check { width:20px; height:20px; border-radius:6px; border:2px solid var(--warm); cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+  .ing-check.checked { background:var(--green); border-color:var(--green); color:white; font-size:.7rem; }
+  .ing-have { color:var(--green); font-weight:700; }
+  .ing-need { color:#aaa; }
+
+  .thermo-section { background:#FFF3E0; border-radius:14px; padding:14px; margin-top:14px; border-left:4px solid #E65100; }
+  .thermo-section h4 { color:#E65100; font-weight:800; font-size:.9rem; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .cookeo-section { background:#E8F5E9; border-radius:14px; padding:14px; margin-top:14px; border-left:4px solid #2E7D32; }
+  .cookeo-section h4 { color:#2E7D32; font-weight:800; font-size:.9rem; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .meta-badge.cookeo-badge { background:#E8F5E9; color:#2E7D32; }
+
+  /* FAVORITES */
+  .fav-empty { text-align:center; padding:50px 20px; color:#bbb; }
+  .fav-empty .big-emoji { font-size:3rem; display:block; margin-bottom:12px; }
+
+  /* SETTINGS */
+  .settings-section { background:white; border-radius:var(--r); padding:16px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .settings-section h3 { font-family:'Playfair Display',serif; font-size:1rem; color:var(--dark); margin-bottom:12px; }
+  .setting-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f5f5f5; }
+  .setting-row:last-child { border-bottom:none; }
+  .setting-label { font-size:.87rem; font-weight:700; color:var(--mid); }
+  .setting-desc { font-size:.73rem; color:#aaa; margin-top:2px; }
+  .toggle-switch { width:44px; height:24px; background:#ddd; border-radius:12px; position:relative; cursor:pointer; transition:.2s; }
+  .toggle-switch.on { background:var(--green); }
+  .toggle-switch::after { content:''; position:absolute; width:20px; height:20px; background:white; border-radius:50%; top:2px; left:2px; transition:.2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+  .toggle-switch.on::after { left:22px; }
+
+  .cuisine-chips { display:flex; flex-wrap:wrap; gap:7px; }
+  .cuisine-chip { border:2px solid var(--warm); border-radius:20px; padding:6px 13px; font-size:.78rem; font-weight:700; color:var(--mid); cursor:pointer; background:white; }
+  .cuisine-chip.active { background:var(--terracotta); border-color:var(--terracotta); color:white; }
+
+  /* COMMON */
+  .divider { height:1px; background:var(--warm); margin:14px 0; }
+  .tip-box { background:var(--light-green); border-radius:12px; padding:12px 14px; font-size:.82rem; color:var(--green); margin-top:12px; border-left:4px solid var(--green); }
+
+  /* CONFETTI */
+  .cc { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; overflow:hidden; }
+  .cp { position:absolute; width:8px; height:8px; border-radius:2px; animation:cf linear forwards; }
+  @keyframes cf { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🍳 Mon Frigo Malin</h1>
+    <div class="header-sub">Cuisine française • Recettes IA</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:5px">
+    <div class="thermo-toggle" id="thermoToggle" onclick="toggleThermo()">
+      <span>🤖 Thermomix</span>
+      <div class="toggle-dot"></div>
+    </div>
+    <div class="thermo-toggle" id="cookeoToggle" onclick="toggleCookeo()">
+      <span>🥘 Cookeo</span>
+      <div class="toggle-dot"></div>
+    </div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" id="nav-fridge" onclick="showScreen('fridge')"><span class="ic">🧊</span>Mon Frigo</button>
+  <button class="nav-btn" id="nav-recipes" onclick="showScreen('recipes')"><span class="ic">📋</span>Recettes</button>
+  <button class="nav-btn" id="nav-favorites" onclick="showScreen('favorites')"><span class="ic">❤️</span>Favoris</button>
+  <button class="nav-btn" id="nav-settings" onclick="showScreen('settings')"><span class="ic">⚙️</span>Réglages</button>
+</nav>
+
+<div class="cc" id="cc"></div>
+
+<!-- ══════ FRIDGE SCREEN ══════ -->
+<div class="screen active" id="screen-fridge">
+  <div class="fridge-hero">
+    <h2>Qu'est-ce qu'il y a dans ton frigo ? 🧊</h2>
+    <p>Ajoute tes ingrédients et je te propose les meilleures recettes à cuisiner !</p>
+  </div>
+
+  <div class="section-label">➕ Ajouter un ingrédient</div>
+  <div class="ingredient-input-wrap">
+    <input class="ingredient-input" id="ingredientInput" type="text" placeholder="Ex: poulet, tomates, fromage..." onkeydown="if(event.key==='Enter') addIngredient()">
+    <button class="add-btn" onclick="addIngredient()">+</button>
+  </div>
+
+  <div class="categories">
+    <button class="cat-btn active" onclick="filterCat(this,'all')">🍽️ Tout</button>
+    <button class="cat-btn" onclick="filterCat(this,'viande')">🥩 Viande</button>
+    <button class="cat-btn" onclick="filterCat(this,'legume')">🥦 Légumes</button>
+    <button class="cat-btn" onclick="filterCat(this,'feculents')">🍝 Féculents</button>
+    <button class="cat-btn" onclick="filterCat(this,'produits-laitiers')">🧀 Laitiers</button>
+    <button class="cat-btn" onclick="filterCat(this,'autres')">🫙 Autres</button>
+  </div>
+
+  <div class="section-label">🧊 Mes ingrédients</div>
+  <div class="ingredients-grid" id="ingredientsGrid">
+    <div class="empty-fridge">Aucun ingrédient ajouté — commence par ajouter ce que tu as !</div>
+  </div>
+
+  <div class="divider"></div>
+  <button class="find-btn" id="findBtn" onclick="findRecipes()">
+    🔍 Trouver mes recettes
+  </button>
+</div>
+
+<!-- ══════ RECIPES SCREEN ══════ -->
+<div class="screen" id="screen-recipes">
+  <div id="recipes-list">
+    <div style="text-align:center;padding:50px 20px;color:#bbb;">
+      <div style="font-size:3rem;margin-bottom:12px">🍽️</div>
+      <p style="font-size:.9rem">Ajoute tes ingrédients dans <strong>Mon Frigo</strong> et lance la recherche !</p>
+    </div>
+  </div>
+  <div id="recipe-detail" class="recipe-detail"></div>
+</div>
+
+<!-- ══════ FAVORITES SCREEN ══════ -->
+<div class="screen" id="screen-favorites">
+  <div class="section-label">❤️ Mes recettes favorites</div>
+  <div id="fav-list">
+    <div class="fav-empty">
+      <span class="big-emoji">❤️</span>
+      <p>Aucun favori pour l'instant.<br>Explore des recettes et ajoute-les à tes favoris !</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SETTINGS SCREEN ══════ -->
+<div class="screen" id="screen-settings">
+  <div class="section-label">⚙️ Préférences</div>
+
+  <div class="settings-section">
+    <h3>🤖 Thermomix</h3>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Mode Thermomix actif</div>
+        <div class="setting-desc">Recettes adaptées avec instructions TM5/TM6</div>
+      </div>
+      <div class="toggle-switch" id="thermoSettingToggle" onclick="toggleThermo()"></div>
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Proposer alternative classique</div>
+        <div class="setting-desc">Affiche aussi la version sans Thermomix</div>
+      </div>
+      <div class="toggle-switch on" id="altToggle" onclick="this.classList.toggle('on')"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>🥘 Cookeo</h3>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Mode Cookeo actif</div>
+        <div class="setting-desc">Recettes adaptées avec instructions Cookeo (pression, dorure, mijotage)</div>
+      </div>
+      <div class="toggle-switch" id="cookeoSettingToggle" onclick="toggleCookeo()"></div>
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Temps de cuisson Cookeo</div>
+        <div class="setting-desc">Affiche la durée sous pression en minutes</div>
+      </div>
+      <div class="toggle-switch on" id="cookeoTimeToggle" onclick="this.classList.toggle('on')"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>🍽️ Type de cuisine préférée</h3>
+    <div class="cuisine-chips">
+      <div class="cuisine-chip active" id="chip-traditionnelle" onclick="setCuisine(this,'traditionnelle')">🇫🇷 Traditionnelle</div>
+      <div class="cuisine-chip" id="chip-moderne" onclick="setCuisine(this,'moderne')">✨ Moderne & Tendance</div>
+      <div class="cuisine-chip" id="chip-mixte" onclick="setCuisine(this,'mixte')">🍽️ Les deux</div>
+      <div class="cuisine-chip" id="chip-rapide" onclick="setCuisine(this,'rapide')">⚡ Rapide (< 20 min)</div>
+      <div class="cuisine-chip" id="chip-healthy" onclick="setCuisine(this,'healthy')">💪 Healthy</div>
+      <div class="cuisine-chip" id="chip-vegetarien" onclick="setCuisine(this,'vegetarien')">🌿 Végétarien</div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>👨‍👩‍👧 Portions</h3>
+    <div class="setting-row">
+      <div class="setting-label">Nombre de personnes</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="changePortions(-1)" style="width:30px;height:30px;border-radius:50%;border:2px solid var(--warm);background:white;font-size:1rem;cursor:pointer;color:var(--terracotta);font-weight:900">−</button>
+        <span id="portionsDisplay" style="font-weight:900;color:var(--dark);font-size:1.1rem">4</span>
+        <button onclick="changePortions(1)" style="width:30px;height:30px;border-radius:50%;border:2px solid var(--warm);background:white;font-size:1rem;cursor:pointer;color:var(--terracotta);font-weight:900">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════ STATE ══════
+let state = {
+  ingredients: [],
+  thermoMode: true,
+  cookeoMode: false,
+  cuisineStyle: 'mixte',
+  portions: 4,
+  favorites: [],
+  lastRecipes: []
+};
+try { const s = localStorage.getItem('monFrigo'); if (s) state = {...state, ...JSON.parse(s)}; } catch(e){}
+function save() { try { localStorage.setItem('monFrigo', JSON.stringify(state)); } catch(e){} }
+
+// ══════ INGREDIENT EMOJIS ══════
+const emojiMap = {
+  poulet:'🍗', boeuf:'🥩', porc:'🥓', veau:'🥩', agneau:'🥩', saumon:'🐟', thon:'🐟', crevette:'🍤', oeuf:'🥚', oeufs:'🥚',
+  tomate:'🍅', tomates:'🍅', carotte:'🥕', carottes:'🥕', oignon:'🧅', oignons:'🧅', ail:'🧄', poireau:'🥬', courgette:'🥒', courgettes:'🥒',
+  pomme:'🍎', pommes:'🍎', citron:'🍋', citrons:'🍋', banane:'🍌', fraise:'🍓', fraises:'🍓',
+  pâtes:'🍝', riz:'🍚', pomme_de_terre:'🥔', pommes_de_terre:'🥔', patate:'🥔', patates:'🥔', farine:'🌾', pain:'🍞',
+  fromage:'🧀', beurre:'🧈', crème:'🥛', lait:'🥛', yaourt:'🫙', parmesan:'🧀', gruyère:'🧀', camembert:'🧀',
+  huile:'🫙', sel:'🧂', poivre:'🌶️', herbe:'🌿', persil:'🌿', thym:'🌿', laurier:'🍃',
+  champignon:'🍄', champignons:'🍄', épinard:'🥬', épinards:'🥬', haricot:'🫘', lentille:'🫘',
+  chocolat:'🍫', sucre:'🍬', vanille:'🌿', miel:'🍯', confiture:'🫙', fève:'🫘'
+};
+function getEmoji(name) {
+  const lower = name.toLowerCase().replace(/ /g,'_');
+  for (const [key, val] of Object.entries(emojiMap)) {
+    if (lower.includes(key)) return val;
+  }
+  return '🥘';
+}
+
+// ══════ FRIDGE FUNCTIONS ══════
+function addIngredient() {
+  const input = document.getElementById('ingredientInput');
+  const val = input.value.trim();
+  if (!val) return;
+  if (state.ingredients.find(i => i.name.toLowerCase() === val.toLowerCase())) { input.value=''; return; }
+  state.ingredients.push({ name: val, emoji: getEmoji(val) });
+  input.value = '';
+  save();
+  renderIngredients();
+}
+
+function removeIngredient(idx) {
+  state.ingredients.splice(idx, 1);
+  save();
+  renderIngredients();
+}
+
+function renderIngredients() {
+  const grid = document.getElementById('ingredientsGrid');
+  if (state.ingredients.length === 0) {
+    grid.innerHTML = '<div class="empty-fridge">Aucun ingrédient ajouté — commence par ajouter ce que tu as !</div>';
+    return;
+  }
+  grid.innerHTML = state.ingredients.map((ing, i) => `
+    <div class="ingredient-tag">
+      <span class="tag-emoji">${ing.emoji}</span>
+      ${ing.name}
+      <span class="remove" onclick="removeIngredient(${i})">×</span>
+    </div>`).join('');
+}
+
+function filterCat(btn, cat) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ══════ THERMO & COOKEO TOGGLE ══════
+function toggleThermo() {
+  state.thermoMode = !state.thermoMode;
+  save();
+  const toggle = document.getElementById('thermoToggle');
+  const settingToggle = document.getElementById('thermoSettingToggle');
+  if (state.thermoMode) { toggle.classList.add('active'); settingToggle.classList.add('on'); }
+  else { toggle.classList.remove('active'); settingToggle.classList.remove('on'); }
+}
+
+function toggleCookeo() {
+  state.cookeoMode = !state.cookeoMode;
+  save();
+  const toggle = document.getElementById('cookeoToggle');
+  const settingToggle = document.getElementById('cookeoSettingToggle');
+  if (state.cookeoMode) { toggle.classList.add('active'); settingToggle.classList.add('on'); }
+  else { toggle.classList.remove('active'); settingToggle.classList.remove('on'); }
+}
+
+// ══════ AI RECIPE FINDER ══════
+async function findRecipes() {
+  if (state.ingredients.length < 2) {
+    alert('Ajoute au moins 2 ingrédients pour trouver des recettes !');
+    return;
+  }
+  showScreen('recipes');
+  document.getElementById('recipes-list').innerHTML = `
+    <div class="loading-box">
+      <span class="loading-spinner">🍳</span>
+      <p>Je cherche les meilleures recettes avec tes ingrédients...</p>
+    </div>`;
+  document.getElementById('recipe-detail').classList.remove('active');
+
+  const ingredientsList = state.ingredients.map(i => i.name).join(', ');
+  const thermoInstruction = state.thermoMode
+    ? `Pour chaque recette, fournis OBLIGATOIREMENT une section "instructions_thermomix" avec les étapes adaptées au Thermomix TM5/TM6 (précise vitesse ex: Vitesse 4, température ex: 100°C, durée), ET une section "instructions_classique".`
+    : `Fournis uniquement les instructions classiques dans "instructions_classique".`;
+  const cookeoInstruction = state.cookeoMode
+    ? `Pour chaque recette, fournis OBLIGATOIREMENT une section "instructions_cookeo" avec les étapes adaptées au Cookeo (mode Dorer, mode Cuisson sous pression avec durée en minutes, mode Mijotage si besoin).`
+    : ``;
+
+  const cuisineDesc = {
+    'traditionnelle': '2 recettes françaises traditionnelles (terroir, bistrot, classiques) et 2 recettes françaises classiques revisitées',
+    'moderne': '4 recettes françaises modernes et tendance (cuisine fusion, gastronomique accessible, healthy chic, street food français)',
+    'mixte': '2 recettes françaises traditionnelles (terroir, bistrot) ET 2 recettes françaises modernes et tendance (fusion, healthy, gastronomique)',
+    'rapide': '4 recettes rapides (moins de 20 minutes de préparation et cuisson), françaises ou modernes',
+    'healthy': '4 recettes saines et équilibrées, légères en calories, riches en légumes et protéines',
+    'vegetarien': '4 recettes végétariennes savoureuses, sans viande ni poisson'
+  };
+  const styleDescription = cuisineDesc[state.cuisineStyle] || cuisineDesc['mixte'];
+
+  const prompt = `Tu es un chef cuisinier français expert. L'utilisateur a ces ingrédients dans son frigo : ${ingredientsList}.
+
+Propose exactement 4 recettes qui correspondent à ce style : ${styleDescription}. Utilise AU MAXIMUM les ingrédients disponibles. Accepte quelques ingrédients basiques supplémentaires (sel, poivre, huile, farine, etc.).
+
+${thermoInstruction}
+${cookeoInstruction}
+
+Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, avec cette structure exacte :
+{
+  "recettes": [
+    {
+      "nom": "Nom de la recette",
+      "emoji": "🍽️",
+      "temps_preparation": 15,
+      "temps_cuisson": 30,
+      "difficulte": "Facile",
+      "portions": ${state.portions},
+      "ingredients_utilisés": ["ingrédient1", "ingrédient2"],
+      "ingredients_manquants": ["ingrédient optionnel"],
+      "ingredients_complets": [
+        {"nom": "ingrédient", "quantite": "200g", "dans_frigo": true}
+      ],
+      "instructions_classique": [
+        {"etape": 1, "description": "Description de l'étape", "duree": 5}
+      ],
+      "instructions_thermomix": [
+        {"etape": 1, "description": "Description avec vitesse, température TM", "duree": 3}
+      ],
+      "instructions_cookeo": [
+        {"etape": 1, "description": "Mode Dorer / Cuisson sous pression X min / Mijotage", "duree": 3}
+      ],
+      "astuce_chef": "Un conseil du chef",
+      "score_correspondance": 85,
+      "style": "🇫🇷 Traditionnelle"
+    }
+  ]
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    let text = data.content.map(c => c.text || '').join('');
+    text = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(text);
+    state.lastRecipes = parsed.recettes;
+    save();
+    renderRecipeList(parsed.recettes);
+  } catch (err) {
+    document.getElementById('recipes-list').innerHTML = `
+      <div style="text-align:center;padding:40px 20px">
+        <div style="font-size:2.5rem;margin-bottom:12px">😕</div>
+        <p style="color:#888;font-size:.9rem">Impossible de trouver des recettes.<br>Vérifie ta connexion internet et réessaie.</p>
+        <button onclick="findRecipes()" style="margin-top:16px;background:var(--terracotta);color:white;border:none;border-radius:12px;padding:12px 24px;font-family:inherit;font-weight:800;cursor:pointer">🔄 Réessayer</button>
+      </div>`;
+  }
+}
+
+function renderRecipeList(recettes) {
+  const isFav = (nom) => state.favorites.some(f => f.nom === nom);
+  document.getElementById('recipe-detail').classList.remove('active');
+  document.getElementById('recipes-list').innerHTML = `
+    <div class="section-label">🍽️ ${recettes.length} recettes trouvées</div>
+    ${recettes.map((r, i) => `
+      <div class="recipe-card ${state.thermoMode ? 'thermo' : ''}" onclick="showRecipeDetail(${i})">
+        <div class="recipe-header">
+          <div class="recipe-emoji">${r.emoji || '🍽️'}</div>
+          <div class="recipe-info">
+            <div class="recipe-name">${r.nom}</div>
+            <div class="recipe-meta">
+              <span class="meta-badge time">⏱️ ${(r.temps_preparation||0) + (r.temps_cuisson||0)} min</span>
+              <span class="meta-badge diff">${r.difficulte || 'Moyen'}</span>
+              ${state.thermoMode ? '<span class="meta-badge thermo-badge">🤖 Thermomix</span>' : ''}
+              ${state.cookeoMode ? '<span class="meta-badge cookeo-badge">🥘 Cookeo</span>' : ''}
+              ${r.style ? `<span class="meta-badge" style="background:#FFF8E1;color:#F57F17">${r.style}</span>` : ''}
+              <span class="meta-badge match">✅ ${r.score_correspondance || 80}%</span>
+            </div>
+            <div class="recipe-ingredients-preview">
+              ${(r.ingredients_utilisés || []).slice(0,4).join(', ')}${(r.ingredients_utilisés||[]).length > 4 ? '...' : ''}
+            </div>
+          </div>
+          <div onclick="event.stopPropagation();toggleFav(${i})" style="font-size:1.4rem;cursor:pointer">${isFav(r.nom) ? '❤️' : '🤍'}</div>
+        </div>
+        <div class="expand-hint">Appuie pour voir la recette complète ▼</div>
+      </div>`).join('')}`;
+}
+
+function showRecipeDetail(idx) {
+  const r = state.lastRecipes[idx];
+  const isFav = state.favorites.some(f => f.nom === r.nom);
+  const totalTime = (r.temps_preparation || 0) + (r.temps_cuisson || 0);
+
+  const stepsHtml = (steps, isThermo) => (steps || []).map((s, i) => `
+    <div class="step">
+      <div class="step-num ${isThermo ? 'thermo' : ''}">${s.etape || i+1}</div>
+      <div class="step-text">${s.description}${s.duree ? ` <span class="step-time">⏱️ ${s.duree} min</span>` : ''}</div>
+    </div>`).join('');
+
+  const ingsHtml = (r.ingredients_complets || []).map((ing, i) => `
+    <div class="ing-item">
+      <div class="ing-check" id="ingcheck-${i}" onclick="toggleIngCheck(${i})">${ing.dans_frigo ? '✓' : ''}</div>
+      <span class="${ing.dans_frigo ? 'ing-have' : 'ing-need'}">${ing.nom}</span>
+      <span style="margin-left:auto;color:#aaa;font-size:.8rem">${ing.quantite || ''}</span>
+    </div>`).join('');
+
+  const thermoSection = state.thermoMode && r.instructions_thermomix ? `
+    <div class="thermo-section">
+      <h4>🤖 Version Thermomix TM5/TM6</h4>
+      ${stepsHtml(r.instructions_thermomix, true)}
+    </div>` : '';
+  const cookeoSection = state.cookeoMode && r.instructions_cookeo ? `
+    <div class="cookeo-section">
+      <h4>🥘 Version Cookeo</h4>
+      ${stepsHtml(r.instructions_cookeo, false)}
+    </div>` : '';
+
+  document.getElementById('recipe-detail').innerHTML = `
+    <div class="back-to-list" onclick="backToList()">← Retour aux recettes</div>
+    <div class="detail-card">
+      <div style="font-size:3rem;text-align:center;margin-bottom:10px">${r.emoji || '🍽️'}</div>
+      <div class="detail-title">${r.nom}</div>
+      <div class="detail-meta">
+        <span class="meta-badge time">🕐 Prépa: ${r.temps_preparation || '?'} min</span>
+        <span class="meta-badge time">🔥 Cuisson: ${r.temps_cuisson || '?'} min</span>
+        <span class="meta-badge diff">${r.difficulte || 'Moyen'}</span>
+        <span class="meta-badge">👥 ${r.portions || state.portions} pers.</span>
+      </div>
+      <button onclick="toggleFav(${idx})" style="width:100%;background:${isFav?'#ffebee':'var(--warm)'};border:none;border-radius:12px;padding:11px;font-family:inherit;font-weight:800;font-size:.9rem;cursor:pointer;color:${isFav?'#c62828':'var(--mid)'}">
+        ${isFav ? '❤️ Retirer des favoris' : '🤍 Ajouter aux favoris'}
+      </button>
+    </div>
+
+    <div class="detail-card">
+      <div class="section-label" style="margin-bottom:12px">🛒 Ingrédients</div>
+      <div class="ingredients-list">${ingsHtml}</div>
+      ${r.ingredients_manquants && r.ingredients_manquants.length > 0 ? `
+        <div class="tip-box" style="margin-top:12px;background:#FFF3E0;border-color:#E65100;color:#E65100">
+          🛒 À acheter : ${r.ingredients_manquants.join(', ')}
+        </div>` : ''}
+    </div>
+
+    <div class="detail-card">
+      <div class="section-label" style="margin-bottom:12px">👨‍🍳 Recette classique</div>
+      ${stepsHtml(r.instructions_classique, false)}
+      ${thermoSection}
+      ${cookeoSection}
+    </div>
+
+    ${r.astuce_chef ? `
+    <div class="detail-card">
+      <div class="tip-box" style="margin:0">
+        💡 <strong>Astuce du chef :</strong> ${r.astuce_chef}
+      </div>
+    </div>` : ''}
+  `;
+
+  document.getElementById('recipes-list').style.display = 'none';
+  document.getElementById('recipe-detail').classList.add('active');
+}
+
+function backToList() {
+  document.getElementById('recipes-list').style.display = 'block';
+  renderRecipeList(state.lastRecipes);
+}
+
+function toggleIngCheck(i) {
+  const el = document.getElementById('ingcheck-'+i);
+  el.classList.toggle('checked');
+  el.textContent = el.classList.contains('checked') ? '✓' : '';
+}
+
+// ══════ FAVORITES ══════
+function toggleFav(idx) {
+  const r = state.lastRecipes[idx];
+  const fi = state.favorites.findIndex(f => f.nom === r.nom);
+  if (fi >= 0) state.favorites.splice(fi, 1);
+  else { state.favorites.push(r); confetti(); }
+  save();
+  renderFavorites();
+  if (state.lastRecipes.length > 0) {
+    if (document.getElementById('recipe-detail').classList.contains('active')) showRecipeDetail(idx);
+    else renderRecipeList(state.lastRecipes);
+  }
+}
+
+function renderFavorites() {
+  const list = document.getElementById('fav-list');
+  if (state.favorites.length === 0) {
+    list.innerHTML = `<div class="fav-empty"><span class="big-emoji">❤️</span><p>Aucun favori.<br>Explore des recettes et ajoute-les !</p></div>`;
+    return;
+  }
+  list.innerHTML = state.favorites.map((r, i) => `
+    <div class="recipe-card" onclick="showFavDetail(${i})">
+      <div class="recipe-header">
+        <div class="recipe-emoji">${r.emoji || '🍽️'}</div>
+        <div class="recipe-info">
+          <div class="recipe-name">${r.nom}</div>
+          <div class="recipe-meta">
+            <span class="meta-badge time">⏱️ ${(r.temps_preparation||0)+(r.temps_cuisson||0)} min</span>
+            <span class="meta-badge diff">${r.difficulte||'Moyen'}</span>
+          </div>
+        </div>
+        <div onclick="event.stopPropagation();removeFav(${i})" style="font-size:1.3rem;cursor:pointer">❤️</div>
+      </div>
+    </div>`).join('');
+}
+
+function showFavDetail(idx) {
+  state.lastRecipes = state.favorites;
+  showScreen('recipes');
+  showRecipeDetail(idx);
+}
+
+function removeFav(idx) {
+  state.favorites.splice(idx, 1);
+  save();
+  renderFavorites();
+}
+
+// ══════ SETTINGS ══════
+function toggleChip(el) { el.classList.toggle('active'); }
+function setCuisine(el, style) {
+  document.querySelectorAll('.cuisine-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  state.cuisineStyle = style;
+  save();
+}
+function changePortions(delta) {
+  state.portions = Math.max(1, Math.min(12, state.portions + delta));
+  document.getElementById('portionsDisplay').textContent = state.portions;
+  save();
+}
+
+// ══════ NAV ══════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name === 'favorites') renderFavorites();
+  if (name === 'recipes' && state.lastRecipes.length > 0) {
+    document.getElementById('recipe-detail').classList.remove('active');
+    renderRecipeList(state.lastRecipes);
+  }
+}
+
+// ══════ CONFETTI ══════
+function confetti() {
+  const c = document.getElementById('cc');
+  const cols = ['#C0622F','#FFD54F','#3D6B45','#8B3A1A','#E8845A','#FFF8F0'];
+  for (let i = 0; i < 50; i++) {
+    const p = document.createElement('div');
+    p.className = 'cp';
+    p.style.left = Math.random()*100+'vw';
+    p.style.background = cols[Math.floor(Math.random()*cols.length)];
+    p.style.animationDuration = (1.5+Math.random()*2)+'s';
+    p.style.animationDelay = Math.random()*.8+'s';
+    c.appendChild(p);
+    setTimeout(()=>p.remove(), 4000);
+  }
+}
+
+// ══════ INIT ══════
+document.addEventListener('DOMContentLoaded', function() {
+  renderIngredients();
+  renderFavorites();
+  if (state.thermoMode) {
+    document.getElementById('thermoToggle').classList.add('active');
+    document.getElementById('thermoSettingToggle').classList.add('on');
+  }
+  if (state.cookeoMode) {
+    document.getElementById('cookeoToggle').classList.add('active');
+    document.getElementById('cookeoSettingToggle').classList.add('on');
+  }
+  document.getElementById('portionsDisplay').textContent = state.portions;
+});
+</script>
+</body>
+</html>
